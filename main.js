@@ -1,29 +1,6 @@
-
 document.addEventListener('DOMContentLoaded', function () {
 
     var toTopAgain = document.getElementById("toTopAgain");
-
-    // window.onscroll = function () {
-    //     scrollFunction()
-    //     scroll();
-    // };
-
-    // function scrollFunction() {
-    //     if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-    //         toTopAgain.style.display = "block";
-    //     } else {
-    //         toTopAgain.style.display = "none";
-    //     }
-    // }
-
-
-    // function scroll() {
-    //     if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-    //         document.getElementById("navbar").style.top = "0";
-    //     } else {
-    //         document.getElementById("navbar").style.top = "-60px";
-    //     }
-    // }
 
     function topFunction() {
         document.body.scrollTop = 0;
@@ -43,29 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 
-    // window.addEventListener('scroll', () => {
-    //     let current = '';
-    //     const sections = document.querySelectorAll('section');
-    //     sections.forEach(section => {
-    //         const sectionTop = section.offsetTop;
-    //         const sectionHeight = section.clientHeight;
-    //         if (window.pageYOffset >= sectionTop - sectionHeight / 3) {
-    //             current = section.getAttribute('id');
-    //             console.log(current);
-    //         }
-    //     });
-
-    //     const navLinks = document.querySelectorAll('.nav-link');
-    //     navLinks.forEach(link => {
-    //         link.classList.remove('active');
-    //         if (link.classList.contains(current)) {
-    //             link.classList.add('active');
-    //             console.log(link);
-    //         }
-    //     });
-    // });
-
-
     const sr = ScrollReveal({
         distance: '50px',
         duration: 1000,
@@ -74,46 +28,65 @@ document.addEventListener('DOMContentLoaded', function () {
         reset: true
     });
 
-    sr.reveal('.navbar', {
-        origin: 'top'
+    sr.reveal('.navbar', { origin: 'top' });
+    sr.reveal('.intro', { origin: 'bottom' });
+    sr.reveal('.myself img', { origin: 'left', interval: 200, delay: 100 });
+    sr.reveal('.myself p', { origin: 'right', interval: 200 });
+    sr.reveal('.skills', { origin: 'bottom', interval: 200 });
+    sr.reveal('.contact', { origin: 'bottom', interval: 200 });
+    sr.reveal('.project-section', { origin: 'bottom' });
 
 
-    });
+    // ============ GitHub Projects (Automatic Loading) ============
+    loadGithubProjects();
 
+    function formatRepoName(name) {
+        return name
+            .replace(/[-_]+/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase())
+            .trim();
+    }
 
-    sr.reveal('.intro', {
-        origin: 'bottom'
-    });
+    function loadGithubProjects() {
+        const username = 'reem1002';
 
-    sr.reveal('.myself img', {
-        origin: 'left',
-        interval: 200,
-        delay: 100
-    });
+        const projectRow = document.querySelector('.project-row');
+        if (!projectRow) return;
 
-    sr.reveal('.myself p', {
-        origin: 'right',
-        interval: 200
-    });
+        projectRow.innerHTML = '<p style="color: #eee;">Loading projects...</p>';
 
-    sr.reveal('.skills', {
-        origin: 'bottom',
-        interval: 200
-    });
+        fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated&type=owner`)
+            .then(res => {
+                if (!res.ok) throw new Error('GitHub API error: ' + res.status);
+                return res.json();
+            })
+            .then(repos => {
+                const sorted = repos.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
 
-    sr.reveal('.contact', {
-        origin: 'bottom',
-        interval: 200
-    });
+                projectRow.innerHTML = '';
 
-    sr.reveal('.project-section', {
-        origin: 'bottom'
-    });
+                sorted.forEach(repo => {
+                    const description = repo.description || 'No description available';
 
-    // sr.reveal('.project-items', {
-    //     origin: 'top',
-    //     distance: '150px',
-    //     duration: 1500
-    // });
+                    const card = document.createElement('div');
+                    card.className = 'project-items';
+                    card.innerHTML = `
+                        <div>
+                            <h1 class="margin-top-medium">${formatRepoName(repo.name)}</h1>
+                            <p class="margin-top-medium">${description}</p>
+                        </div>
+                        <div>
+                            <a class="project-link-btn" href="${repo.html_url}" target="_blank">View Project</a>
+                            <p class="margin-top-medium">Interested? <a href="#contacts" class="nav-link">Contact me</a>!</p>
+                        </div>
+                    `;
+                    projectRow.appendChild(card);
+                });
+            })
+            .catch(err => {
+                projectRow.innerHTML = `<p style="color: #eee;">Failed to load projects: ${err.message}</p>`;
+                console.error('Failed to load GitHub projects:', err);
+            });
+    }
 
 });
